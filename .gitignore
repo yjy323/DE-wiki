@@ -236,4 +236,8 @@ pyrightconfig.json
 .history
 .ionide
 
+### Obsidian ###
+# config dir
+retrospective/.obsidian/
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode,python,jupyternotebooks
