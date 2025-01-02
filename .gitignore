@@ -238,6 +238,6 @@ pyrightconfig.json
 
 ### Obsidian ###
 # config dir
-retrospective/.obsidian/
+.obsidian/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode,python,jupyternotebooks
