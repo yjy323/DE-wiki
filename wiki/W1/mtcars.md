@@ -1,0 +1,62 @@
+>The data was extracted from the 1974 _Motor Trend_ US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973--74 models).
+
+- mpg = Miles/(US) gallon
+	- 연료 소모량
+	- 연비
+---
+- cyl = Number of cylinders
+	- X 기통
+	- 엔진의 실린더
+		- 실린더는 폭발을 일으키고 그 에너지를 기계적인 운동으로 변환하는 부품
+		- 실린더의 개수가 많을수록 출력이 강하다.
+		- 배기량
+			- 엔진이 한 번의 회전에서 흡입할 수 있는 공기와 연료의 총 부피
+			- 배기량은 실린더의 개수와 크기에 비례한다.
+		- 고정된 배기량에 대해 실린더 개수가 증가하면 실린더의 크기가 작아지므로 효율이 떨어진다.
+	- 실린더의 개수가 많을수록 고속 주행 및 고출력을 목적으로 하는 자동차이다.
+	- 실린더는 상하운동을 한다. 이를 회전운동으로 변환하는 크랭크 축과 연결되어 있다.
+- disp = Displacement (cu.in.)
+	- 배기량의 단위, 입방 인치
+	- 1 cu.in. = 약 16cc
+- hp = Gross horsepower
+	- 엔진 자체의 측정 마력
+	- 비교되는 개념은 Net으로 엔진에 차체를 부착한 뒤 측정하는 마력
+- drat = Rear axle ratio
+	- 후륜축 기어비
+	- 구동축(드라이브 샤프트)이 한 바퀴 회전할 때 후륜축이 회전하는 바퀴 수
+	- 주로 차량의 가속력과 최고 속도에 영향을 미친다.
+		- 기어비가 크면 토크가 높다. 따라서 빠른 가속이 가능하다.
+	- **살짝 이해가 안됨**
+- wt = Weight (lb/1000)
+	- 차량 무게, 파운드 단위
+- qsec = ¼ mile time
+	- 초당 1/4 마일 통과 시간 단위
+	- qsec이 낮을수록 가속 성능과 엔진 출력이 뛰어나다.
+- vs = V/S
+	- V shape
+	- 무게 증가, 더 많은 실린더 배열
+- am = Transmission (0 = automatic, 1 = manual)
+	- 변속기 유형
+	- 자동은 RPM에 따라 차량 스스로 기어를 변속하는 방식
+- gear = Number of forward gears
+	- 차량의 (전진) 기어 수
+- carb = Number of carburetors
+	- 내연기관에서 공기와 연료를 혼합하는 장치
+	- 연료를 분무, 공기와 혼합, 실린더(연소실)로 공급
+		- 실린더 폭발에서 폭발(운동) 에너지 발생
+	- 카뷰레터가 많을수록 연료 공급 원활, 고출력 발휘
+	- 고비용
+---
+- 분석 목적은 무엇일까?
+	- 금전적 가치 창출, 시장의 니즈 분석
+- 분석 목적에 앞서 기본적으로 해야할 일
+	- EDA
+	- 기능 및 프로그래밍 요구사항
+---
+### Gear, Transmission
+- 범주형 데이터에 대한 EDA
+- 다양한 분석 기법
+	- 분포
+	- 관계
+	- 그룹별 통계량
+	- 집계
