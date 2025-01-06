@@ -10,6 +10,9 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+*.db
+*.sql
+
 # IPython
 profile_default/
 ipython_config.py
