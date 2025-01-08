@@ -1,116 +1,87 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
+# 표준 라이브러리
 import sqlite3
-import json
-import os
 
-# -------------------------
-# 1. Extract: 크롤링, 테이블 파싱, JSON 변환
-# -------------------------
-def fetch_webpage(url):
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(f"[ERROR] Failed to fetch webpage. Status Code: {response.status_code}")
-        return None
-    return response.text
+# 서드파티 라이브러리
+import pandas as pd
 
-def parse_gdp_table(html):
-    # BeautifulSoup으로 HTML 파싱
-    soup = BeautifulSoup(html, "html.parser")
-    tables = soup.find_all("table", {"class": "wikitable"})
+# 로컬 모듈
+import missions.W1.M3.etl_project_gdp as etl_basic
+from missions.W1.M3.log.log import Logger
 
-    gdp_table = None
-    for table in tables:
-        caption = table.find("caption")
-        if caption and "GDP (million US$) by country" in caption.get_text():
-            gdp_table = table
-            break
+logger = Logger.get_logger("GDP_ETL_LOGGER")
 
-    if not gdp_table:
-        print("[Extract] No matching table found.")
-        return None
-    
-    print("[Extract] Found the target table. Parsing data...")
-    return gdp_table
+###########
+#  Extract Process
+###########
+def extract_gdp_wiki_web2json(url: str, out_file: str) -> None:
+    etl_basic.extract_gdp_wiki_web2json(url, out_file)
 
-def parse_gdp_table_data(gdp_table):
-    rows = gdp_table.find_all("tr")
-    data = []
-    
-    for row in rows[3:]:  # 헤더와 총계를 제외
-        cells = row.find_all(["td"])
-        for cell in cells[1:]:
-            for sup in cell.find_all("sup"):
-                sup.decompose()  # <sup> 태그 제거
+###########
+#  Transform Process
+###########
 
-        country = cells[0].get_text(strip=True)
-        gdp_cell = cells[1]
-        if "table-na" in gdp_cell.get("class", []):
-            gdp = None
-            year = None
-        else:
-            gdp = gdp_cell.get_text(strip=True)
-            year = cells[2].get_text(strip=True)
-        
-        data.append({
-            "country": country,
-            "type": "IMF",
-            "gdp": gdp,
-            "year": year
-        })
-    
-    print(f"[Extract] Extracted {len(data)} rows.")
-    return data
+def json2dataframe(json_file: str)-> pd.DataFrame:
+    """
+    Reads a JSON file and converts it into a Pandas DataFrame.
 
-def save_to_json(data, output_file):
-    print(f"[Extract] Saving data to {output_file}...")
-    with open(output_file, "w", encoding="utf-8") as json_file:
-        json.dump(data, json_file, indent=4, ensure_ascii=False)
-    print(f"[Extract] Data successfully saved to {output_file}.")
+    Args:
+        json_file (str): The file path to the JSON file to be read.
 
-def extract_gdp_data_to_json(url, output_file):
-    html = fetch_webpage(url)
-    if not html:
-        return
-    gdp_table = parse_gdp_table(html)
-    if not gdp_table:
-        return
-    data = parse_gdp_table_data(gdp_table)
-    save_to_json(data, output_file)
+    Returns:
+        pd.DataFrame: A Pandas DataFrame containing the data from the JSON file.
+    """
 
+    try:
+        logger.info(f"[START] Read data from {json_file} ...")
+        df = pd.read_json(json_file)
+        logger.info(f"[COMPLET] Data was read successfully: {json_file}")
+    except Exception as e:
+        logger.error(f"[FAIL] Failed to read data to {json_file}. Exception: {e.__class__.__name__}")
+        raise
+    return df
 
-# ----------------------
-# 2. Transform: 데이터 변환
-# ----------------------
-def transform(json_file, region_file):
-    print("[Transform] Transforming data...")
-
-    # Load JSON 데이터
-    with open(json_file, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    df_gdp = pd.DataFrame(data)
-
-    # Load region 데이터
-    regions = pd.read_json(region_file)
-
-    # 데이터 정제 및 변환
-    df_gdp['gdp'] = pd.to_numeric(df_gdp['gdp'].str.replace(",", ""), errors='coerce')
-    df_gdp['gdp'] = (df_gdp['gdp'] / 1e3).round(2)  # 단위 변환 (1B USD)
-    df_gdp = df_gdp.sort_values(by='gdp', ascending=False).reset_index(drop=True)
-
-    # Region 병합
-    df_merged = df_gdp.merge(regions, on='country', how='left')
-    df_merged = df_merged.rename(columns={"gdp": "GDP_USD_billion", "year": "Year", "region": "Region"})
-
-    print("[Transform] Transformation complete.")
+def merge_region_by_country(df_gdp: pd.DataFrame, df_region: pd.DataFrame)-> pd.DataFrame:
+    try:
+        logger.info(f"[START] Start Merging the region data with gdp data ...")
+        df_merged = df_gdp.merge(df_region, on='country', how='left')
+        logger.info(f"[COMPLET] Succesfuly merged the region data with gdp data.")
+    except Exception as e:
+        logger.info(f"[FAIL] Failed to merge the region data with gdp data.")
+        raise
     return df_merged
 
+def transform_gdp(df_gdp):
+    df_gdp['gdp'] = pd.to_numeric(df_gdp['gdp'].str.replace(",", ""), errors='coerce')  # str2int
+    df_gdp['gdp'] = (df_gdp['gdp'] / 1e3).round(2)  # GDP의 단위는 1B USD이어야 하고 소수점 2자리까지만 표시해 주세요.
+    df_gdp = df_gdp.sort_values(by='gdp', ascending=False).reset_index(drop=True)  # 해당 테이블에는 GDP가 높은 국가들이 먼저 나와야 합니다.
 
-# ----------------------
-# 3. Load: 데이터 로드
-# ----------------------
-def load_to_sqlite(df, db_name="data/Countries_by_GDP.db"):
+    # 결측값에 "측정하지 못한 통게치"라는 의미가 있기 때문에 처리하지 않는다.
+        
+
+def transform_gdp_from_json(gdp_file, region_file):
+    try:
+        logger.info("[START] Starting GDP Transforming process...")
+
+        df_gdp = json2dataframe(gdp_file)
+        df_region = json2dataframe(region_file)
+
+        # 데이터 정제 및 변환
+        transform_gdp(df_gdp)
+
+        # Region 병합
+        df_gdp_with_region = merge_region_by_country(df_gdp, df_region)
+
+        logger.info("[COMPLET] GDP Transforming process completed successfully.")
+    except Exception as e:
+          logger.warn("[FAIL] GDP Transforming process failed.")
+    
+    return df_gdp_with_region
+
+
+###########
+#  Load Process
+###########
+def load_to_sqlite(df, db_name="missions/W1/M3/data/Countries_by_GDP.db"):
     print("[Load] Loading data into SQLite database...")
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -138,16 +109,13 @@ def load_to_sqlite(df, db_name="data/Countries_by_GDP.db"):
 
 def main():
     url = "https://en.wikipedia.org/wiki/List_of_countries_by_GDP_%28nominal%29"
-    output_file = "data/Countries_by_GDP.json"
-    region_file = "data/cultural-geo-mapper.json"
+    gdp_file = "missions/W1/M3/data/Countries_by_GDP.json"
+    region_file = "missions/W1/M3/data/cultural-geo-mapper.json"
 
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-    # Extract 단계 실행
-    extract_gdp_data_to_json(url, output_file)
+    extract_gdp_wiki_web2json(url, gdp_file)
 
     # Transform 단계 실행
-    df_transformed = transform(output_file, region_file)
+    df_transformed = transform_gdp_from_json(gdp_file, region_file)
 
     # Load 단계 실행
     load_to_sqlite(df_transformed)
