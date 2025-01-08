@@ -2,6 +2,8 @@ import logging
 from datetime import datetime
 import sys
 
+import os
+
 class Logger(logging.Logger):
     _instance = None
 
@@ -23,7 +25,7 @@ class Logger(logging.Logger):
         self.addHandler(stream_handler)
 
         # 파일 핸들러 설정
-        file_handler = logging.FileHandler('missions/W1/M3/log/etl_project_log.txt', mode='a')
+        file_handler = logging.FileHandler(os.path.dirname(os.path.abspath(__file__)) + '/etl_project_log.txt', mode='a')
         self.addHandler(file_handler)
 
     @classmethod
@@ -56,19 +58,3 @@ class Logger(logging.Logger):
 
     def error(self, message):
         self._log_with_time('ERROR', message)
-
-# 사용 예시
-if __name__ == "__main__":
-    # 로거 인스턴스 생성
-    logger = Logger.get_logger("ETLLogger")
-    logger.setLevel(logging.DEBUG)
-
-    # 로그 메시지 테스트
-    logger.info("ETL 프로세스 시작")
-    logger.debug("데이터 추출 중...")
-    logger.warn("중복 데이터 발견")
-    logger.error("변환 과정에서 오류 발생")
-
-    # 싱글톤 패턴 테스트
-    another_logger = Logger.get_logger("AnotherLogger")
-    print(f"같은 인스턴스인가?: {logger is another_logger}")  # True가 출력되어야 함
