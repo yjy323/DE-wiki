@@ -7,4 +7,5 @@ Hadoop의 모든 구성 요소가 하나의 머신에서 실행되는 환경
 	2. HDFS_DATANODE_USER
 	3. HDFS_SECONDARYNAMENODE_USER
 	4. YARN_RESOURCEMANAGER_USER
-	5. YARN_NODEMANAGER_USER딩
+	5. YARN_NODEMANAGER_USER
+https://dev.to/boyu1997/run-python-mapreduce-on-local-docker-hadoop-cluster-1g46
