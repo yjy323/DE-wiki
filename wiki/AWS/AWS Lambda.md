@@ -52,3 +52,8 @@ Use to run code *without provisioning or managing* servers.
 - Best Practice
 	- lambda_handler와 로직을 분리하라
 	- 실행 시간 및 크기를 고려해 배포 환경까지 최적화하자
+---
+## References
+- [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
+- [Tutorial: Create an EventBridge scheduled rule for AWS Lambda functions](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html)
+- [Launch a Spark job in a transient EMR cluster using a Lambda function](https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/launch-a-spark-job-in-a-transient-emr-cluster-using-a-lambda-function.html)
